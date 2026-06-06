@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Today's Rate — Jack Chen Mortgage</title>
 <style>
   :root{
@@ -53,6 +54,13 @@
   .logtbl td{padding:1px 0; font-size:12px;}
   .logtbl td:last-child{text-align:right; color:#C26A1B; font-weight:600; font-variant-numeric:tabular-nums;}
   .loglink{background:none; border:none; color:#185FA5; cursor:pointer; font-size:11px; padding:3px 0 0; text-decoration:underline;}
+  @media (max-width:760px){
+    body{padding:10px;}
+    .bar{width:100%; padding:12px 14px;}
+    .bar p{min-width:0; font-size:13px;}
+    .stage{flex-direction:column; gap:12px; align-items:center;}
+    .log{width:100%; max-height:340px;}
+  }
 </style>
 </head>
 <body>
@@ -76,12 +84,18 @@
   })();
   </script>
 
+  <div id="imgov" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:100000; overflow:auto; padding:18px; text-align:center;">
+    <div style="color:#fff; font-size:15px; margin:6px 0 14px; font-family:Arial,sans-serif;">Press and hold the image to save it to your photos. Tap anywhere outside to close.</div>
+    <img id="imgout" style="max-width:100%; height:auto; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.5);">
+  </div>
+
   <div class="bar">
     <p><b>Click any text to edit</b>, then Save — syncs across your devices. <span id="status" style="font-weight:500;"></span></p>
     <div style="display:flex; gap:10px;">
       <button class="btn" id="reset" style="background:transparent; color:#555; border:1px solid #ccc;">Reset</button>
       <button class="btn" id="save" style="background:#1D9E75;">Save</button>
       <button class="btn" id="dl">Download PNG</button>
+      <button class="btn" id="saveimg" style="background:#185FA5;">Save to phone</button>
     </div>
   </div>
 
@@ -136,9 +150,10 @@
   <script>
     var post = document.getElementById('post');
     function fit(){
-      var vw = window.innerWidth - 210 - 90;
+      var mobile = window.innerWidth < 760;
+      var vw = mobile ? (window.innerWidth - 22) : (window.innerWidth - 210 - 90);
       var vh = window.innerHeight - 150;
-      var f = Math.min(1, vw/1080, vh/1350);
+      var f = mobile ? Math.min(1, vw/1080) : Math.min(1, vw/1080, vh/1350);
       post.style.zoom = f;
     }
     window.addEventListener('resize', fit);
@@ -224,6 +239,17 @@
         link.href = canvas.toDataURL('image/png'); link.click(); post.style.zoom = prev;
       });
     });
+    function genImage(){
+      if (document.activeElement) document.activeElement.blur();
+      var prev = post.style.zoom; post.style.zoom = 1;
+      html2canvas(post, {scale: 1, backgroundColor: '#FBF6EF', useCORS: true}).then(function(canvas){
+        post.style.zoom = prev;
+        var ov=document.getElementById('imgov'), im=document.getElementById('imgout');
+        im.src=canvas.toDataURL('image/png'); ov.style.display='block';
+      });
+    }
+    var si=document.getElementById('saveimg'); if(si) si.addEventListener('click', genImage);
+    var ov=document.getElementById('imgov'); if(ov) ov.addEventListener('click', function(e){ if(e.target.id==='imgov'||e.target.tagName==='DIV') ov.style.display='none'; });
   </script>
 
 </body>
