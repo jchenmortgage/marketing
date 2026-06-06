@@ -77,7 +77,7 @@
   </script>
 
   <div class="bar">
-    <p><b>Click any text to edit</b>, then Save. <span id="status" style="font-weight:500;"></span></p>
+    <p><b>Click any text to edit</b>, then Save — syncs across your devices. <span id="status" style="font-weight:500;"></span></p>
     <div style="display:flex; gap:10px;">
       <button class="btn" id="reset" style="background:transparent; color:#555; border:1px solid #ccc;">Reset</button>
       <button class="btn" id="save" style="background:#1D9E75;">Save</button>
@@ -146,33 +146,33 @@
 
     var KEY='jcm_rate_v1';
     var LOGKEY='jcm_rate_log';
+    var DB='https://jc-rates-default-rtdb.firebaseio.com';
     var fields=document.querySelectorAll('.edit');
     var statusEl=document.getElementById('status');
     var logEl=document.getElementById('log');
+    var LOG=[];
     function fmt(ts){ try{ return new Date(ts).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } }
     function txt(el){ return el? el.textContent.trim() : ''; }
-    function setStatus(state, ts){
+    function setStatus(s, ts){
       if(!statusEl) return;
-      if(state==='saved'){ statusEl.textContent='✓ Saved · '+fmt(ts); statusEl.style.color='#1D9E75'; }
-      else if(state==='dirty'){ statusEl.textContent='● Unsaved changes'; statusEl.style.color='#BA7517'; }
+      if(s==='saved'){ statusEl.textContent='✓ Synced · '+fmt(ts); statusEl.style.color='#1D9E75'; }
+      else if(s==='dirty'){ statusEl.textContent='● Unsaved changes'; statusEl.style.color='#BA7517'; }
+      else if(s==='syncing'){ statusEl.textContent='⟳ Syncing…'; statusEl.style.color='#7A7065'; }
+      else if(s==='offline'){ statusEl.textContent='⚠ Saved on this device (cloud sync failed)'; statusEl.style.color='#C0392B'; }
       else { statusEl.textContent='Not saved yet'; statusEl.style.color='#7A7065'; }
     }
     function snapshot(){
       var data=[]; fields.forEach(function(el){ data.push(el.innerHTML); });
       var rows=[];
-      document.querySelectorAll('.row').forEach(function(r){
-        var p=r.querySelector('.program > span'); var rt=r.querySelector('.rate');
-        rows.push({p:p?p.textContent.trim():'', r:rt?rt.textContent.trim():''});
-      });
+      document.querySelectorAll('.row').forEach(function(r){ var p=r.querySelector('.program > span'); var rt=r.querySelector('.rate'); rows.push({p:p?p.textContent.trim():'', r:rt?rt.textContent.trim():''}); });
       return {ts:Date.now(), data:data, date:txt(document.querySelector('.date')), assum:txt(document.querySelector('.brand')), rows:rows};
     }
-    function getLog(){ try{ return JSON.parse(localStorage.getItem(LOGKEY))||[]; }catch(e){ return []; } }
+    function applyData(data){ if(data && data.length===fields.length){ fields.forEach(function(el,i){ el.innerHTML=data[i]; }); } }
     function renderLog(){
       if(!logEl) return;
-      var log=getLog();
-      var h='<div class="loghead"><span>Saved log</span>'+(log.length?'<button id="clearlog" class="loglink">Clear</button>':'')+'</div>';
-      if(!log.length){ h+='<div class="logempty">No saves yet. Edit rates and press Save. Hover an entry for details.</div>'; }
-      log.forEach(function(e,i){
+      var h='<div class="loghead"><span>Saved log</span>'+(LOG.length?'<button id="clearlog" class="loglink">Clear</button>':'')+'</div>';
+      if(!LOG.length){ h+='<div class="logempty">No saves yet. Edit rates and press Save. Hover an entry for details.</div>'; }
+      LOG.forEach(function(e,i){
         h+='<div class="logitem"><div class="logtop"><span class="logtime">'+fmt(e.ts)+'</span></div>';
         h+='<div class="logdate">'+(e.date||'')+'</div>';
         h+='<div class="logmore"><div class="logsub2">'+(e.assum||'')+'</div><table class="logtbl">';
@@ -181,40 +181,40 @@
       });
       logEl.innerHTML=h;
       var cl=document.getElementById('clearlog');
-      if(cl) cl.addEventListener('click', function(){ if(confirm('Clear the saved log?')){ localStorage.removeItem(LOGKEY); renderLog(); } });
-      logEl.querySelectorAll('button[data-i]').forEach(function(b){
-        b.addEventListener('click', function(){
-          var e=getLog()[+b.getAttribute('data-i')];
-          if(e&&e.data&&e.data.length===fields.length){ fields.forEach(function(el,j){ el.innerHTML=e.data[j]; }); setStatus('dirty'); }
-        });
+      if(cl) cl.addEventListener('click', function(){ if(confirm('Clear the saved log on all devices?')){ LOG=[]; try{localStorage.removeItem(LOGKEY);}catch(e){} fbPut('/log', []); renderLog(); } });
+      logEl.querySelectorAll('button[data-i]').forEach(function(b){ b.addEventListener('click', function(){ var e=LOG[+b.getAttribute('data-i')]; if(e&&e.data&&e.data.length===fields.length){ applyData(e.data); setStatus('dirty'); } }); });
+    }
+    function fbGet(path){ return fetch(DB+path+'.json').then(function(r){ return r.ok? r.json() : null; }).catch(function(){ return null; }); }
+    function fbPut(path,val){ return fetch(DB+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)}).then(function(r){ return r.ok; }).catch(function(){ return false; }); }
+    function autodate(){ var dEl=document.querySelector('.date'); if(dEl){ var today=new Date().toLocaleDateString([], {month:'long',day:'numeric',year:'numeric'}); if(dEl.textContent.trim()!==today){ dEl.textContent=today; } } }
+    function init(){
+      setStatus('syncing');
+      Promise.all([fbGet('/current'), fbGet('/log')]).then(function(res){
+        var cur=res[0], log=res[1];
+        if(cur && cur.data){ applyData(cur.data); }
+        else { try{ var o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.data) applyData(o.data); }catch(e){} }
+        if(Array.isArray(log)){ LOG=log; } else { try{ LOG=JSON.parse(localStorage.getItem(LOGKEY))||[]; }catch(e){ LOG=[]; } }
+        renderLog();
+        autodate();
+        if(cur && cur.ts) setStatus('saved', cur.ts); else setStatus('none');
       });
     }
-    try{
-      var obj=JSON.parse(localStorage.getItem(KEY));
-      if(obj && obj.data && obj.data.length===fields.length){
-        fields.forEach(function(el,i){ el.innerHTML=obj.data[i]; });
-        setStatus('saved', obj.ts);
-      } else { setStatus('none'); }
-    }catch(e){ setStatus('none'); }
-    (function(){
-      var dEl=document.querySelector('.date');
-      if(dEl){ var today=new Date().toLocaleDateString([], {month:'long', day:'numeric', year:'numeric'});
-        if(dEl.textContent.trim()!==today){ dEl.textContent=today; setStatus('dirty'); } }
-    })();
-    renderLog();
     function doSave(){
-      try{
-        var snap=snapshot();
-        localStorage.setItem(KEY, JSON.stringify({data:snap.data, ts:snap.ts}));
-        var log=getLog(); log.unshift(snap); if(log.length>40) log=log.slice(0,40);
-        localStorage.setItem(LOGKEY, JSON.stringify(log));
-        setStatus('saved', snap.ts); renderLog();
-      }catch(e){}
+      setStatus('syncing');
+      var snap=snapshot();
+      try{ localStorage.setItem(KEY, JSON.stringify({data:snap.data, ts:snap.ts})); }catch(e){}
+      LOG.unshift(snap); if(LOG.length>40) LOG=LOG.slice(0,40);
+      try{ localStorage.setItem(LOGKEY, JSON.stringify(LOG)); }catch(e){}
+      renderLog();
+      Promise.all([fbPut('/current',{data:snap.data, ts:snap.ts}), fbPut('/log', LOG)]).then(function(r){
+        if(r[0] && r[1]) setStatus('saved', snap.ts); else setStatus('offline', snap.ts);
+      });
     }
     document.addEventListener('input', function(e){ if(e.target.classList && e.target.classList.contains('edit')) setStatus('dirty'); });
     document.addEventListener('keydown', function(e){ if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')){ e.preventDefault(); doSave(); } });
     var sv=document.getElementById('save'); if(sv) sv.addEventListener('click', doSave);
-    var rst=document.getElementById('reset'); if(rst) rst.addEventListener('click', function(){ localStorage.removeItem(KEY); location.reload(); });
+    var rst=document.getElementById('reset'); if(rst) rst.addEventListener('click', function(){ location.reload(); });
+    init();
     document.getElementById('dl').addEventListener('click', function(){
       if (document.activeElement) document.activeElement.blur();
       var prev = post.style.zoom; post.style.zoom = 1;
