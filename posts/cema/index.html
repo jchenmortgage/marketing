@@ -10,6 +10,11 @@ body{margin:0;background:#33302b;font-family:'Nunito Sans','Noto Sans SC',sans-s
 .langtog{margin-left:auto;display:flex;background:rgba(255,255,255,.12);border-radius:999px;padding:4px}
 .langtog button{background:none;border:none;color:#ddd;font-weight:800;font-size:15px;padding:8px 20px;border-radius:999px;cursor:pointer;font-family:inherit}
 .langtog button.on{background:#D8842F;color:#fff}
+.savebtn{background:#2faa5a;color:#fff;border:none;font-weight:900;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;font-family:inherit;opacity:.45;transition:opacity .15s}
+.savebtn.dirty{opacity:1;box-shadow:0 0 0 3px rgba(47,170,90,.3)}
+.resetbtn{background:rgba(255,255,255,.14);color:#fff;border:none;font-weight:800;font-size:13px;padding:9px 14px;border-radius:999px;cursor:pointer;font-family:inherit}
+.gridov{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .12s;background-image:linear-gradient(rgba(216,132,47,.28) 1px,transparent 1px),linear-gradient(90deg,rgba(216,132,47,.28) 1px,transparent 1px);background-size:60px 60px}
+.slide.dragging .gridov{opacity:1}
 .body{padding:24px}
 .top{max-width:1000px;margin:0 auto 22px;background:#42403a;border-radius:14px;padding:18px 24px;font-size:16px;line-height:1.5}
 .top b{color:#F4C982}
@@ -29,9 +34,10 @@ body{margin:0;background:#33302b;font-family:'Nunito Sans','Noto Sans SC',sans-s
 .el.tag2{display:inline-flex;background:rgba(255,255,255,.16);border:3px solid rgba(255,255,255,.55);color:#fff;font-weight:900;font-size:30px;padding:13px 30px;border-radius:999px;white-space:nowrap}
 </style></head><body>
 <div class="nav"><a class="back" href="../../">&larr; Marketing</a><img src="https://jchenmortgage.github.io/marketing/jcm-logo-white.png" style="height:34px"><span class="ttl">NY CEMA Carousel</span>
-<div class="langtog"><button id="bEN" class="on" onclick="setLang('en')">EN</button><button id="bCN" onclick="setLang('cn')">中文</button></div></div>
+<div class="langtog"><button id="bEN" class="on" onclick="setLang('en')">EN</button><button id="bCN" onclick="setLang('cn')">中文</button></div>
+<button id="saveBtn" class="savebtn" onclick="save()">💾 Save</button><button class="resetbtn" onclick="resetEdits()">Reset</button></div>
 <div class="body">
-<div class="top"><b>Your carousel editor.</b> &nbsp;Click any text to edit &nbsp;·&nbsp; drag any element to move &nbsp;·&nbsp; ⬇ PNG exports that slide at 1080px. <br><span style="color:#bbb">Single click edits; click-and-drag moves. Toggle EN / 中文 above.</span></div>
+<div class="top"><b>Your carousel editor.</b> &nbsp;Click any text to edit &nbsp;·&nbsp; drag any element to move (a grid appears) &nbsp;·&nbsp; 💾 Save keeps your edits &nbsp;·&nbsp; ⬇ PNG exports that slide at 1080px. <br><span style="color:#bbb">Single click edits; click-and-drag moves. Toggle EN / 中文 above.</span></div>
 <div class="grid" id="grid-en"><div class="wrap"><div class="hd">Slide 1 <button onclick="dl(this)" data-i="en1">⬇ PNG</button></div><div class="scaler" style="height:567px"><div class="slidebox" style="height:1350px"><div class="slide" data-n="1" style="height:1350px;background:linear-gradient(180deg,#FDF4E5,#FBE7CB)"><div class="bg"><svg viewBox="0 0 1080 460" preserveAspectRatio="xMidYMax meet" style="position:absolute;left:0;bottom:0;width:1080px;height:460px">
 <circle cx="905" cy="96" r="66" fill="#F4C982"/><ellipse cx="250" cy="86" rx="80" ry="30" fill="#fff" opacity=".7"/><ellipse cx="324" cy="92" rx="60" ry="24" fill="#fff" opacity=".7"/>
 <rect x="0" y="420" width="1080" height="40" fill="#C26A1B"/>
@@ -56,18 +62,66 @@ function setLang(l){
   document.getElementById('bEN').classList.toggle('on',l==='en');
   document.getElementById('bCN').classList.toggle('on',l==='cn');
 }
-let cur=null,sx,sy,ox,oy,moved=false;
+// inject a grid overlay into every slide (shown while dragging)
+document.querySelectorAll('.slide').forEach(function(sl){
+  var g=document.createElement('div'); g.className='gridov'; sl.insertBefore(g,sl.firstChild);
+});
+// --- dirty / save state ---
+var KEY='jcm_cema_edits';
+function markDirty(){ document.getElementById('saveBtn').classList.add('dirty'); }
+function collect(){
+  var data={};
+  ['grid-en','grid-cn'].forEach(function(gid){
+    var g=document.getElementById(gid); data[gid]={};
+    g.querySelectorAll('.slide').forEach(function(sl){
+      var arr=[];
+      sl.querySelectorAll('.el').forEach(function(el){ arr.push({l:el.style.left,t:el.style.top,h:el.innerHTML}); });
+      data[gid][sl.dataset.n]=arr;
+    });
+  });
+  return data;
+}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(collect()));
+  var b=document.getElementById('saveBtn'); b.classList.remove('dirty'); var o=b.textContent; b.textContent='✓ Saved'; setTimeout(function(){b.textContent=o;},1400);
+}
+function restore(){
+  var raw=localStorage.getItem(KEY); if(!raw)return;
+  var data; try{data=JSON.parse(raw);}catch(e){return;}
+  ['grid-en','grid-cn'].forEach(function(gid){
+    var g=document.getElementById(gid); if(!data[gid])return;
+    g.querySelectorAll('.slide').forEach(function(sl){
+      var arr=data[gid][sl.dataset.n]; if(!arr)return;
+      var els=sl.querySelectorAll('.el');
+      els.forEach(function(el,i){ if(arr[i]){ el.style.left=arr[i].l; el.style.top=arr[i].t; el.innerHTML=arr[i].h; } });
+    });
+  });
+}
+function resetEdits(){ if(confirm('Discard saved edits and reload the original?')){ localStorage.removeItem(KEY); location.reload(); } }
+restore();
+document.addEventListener('input',function(ev){ if(ev.target.closest('.el')) markDirty(); });
+
+let cur=null,sx,sy,ox,oy,moved=false,curslide=null;
 document.addEventListener('mousedown',function(ev){
   var e=ev.target.closest('.el'); if(!e)return;
   if(document.activeElement===e)return;
-  cur=e;moved=false;sx=ev.clientX;sy=ev.clientY;ox=parseFloat(e.style.left)||0;oy=parseFloat(e.style.top)||0;e.style.cursor='grabbing';ev.preventDefault();
+  cur=e;moved=false;sx=ev.clientX;sy=ev.clientY;ox=parseFloat(e.style.left)||0;oy=parseFloat(e.style.top)||0;e.style.cursor='grabbing';
+  curslide=e.closest('.slide');
+  ev.preventDefault();
 });
 window.addEventListener('mousemove',function(ev){
   if(!cur)return; var k=1/0.42; var dx=(ev.clientX-sx)*k, dy=(ev.clientY-sy)*k;
-  if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;
+  if(Math.abs(dx)>4||Math.abs(dy)>4){ if(!moved&&curslide)curslide.classList.add('dragging'); moved=true; }
   cur.style.left=(ox+dx)+'px';cur.style.top=(oy+dy)+'px';
 });
-window.addEventListener('mouseup',function(){ if(cur){cur.style.cursor='grab'; if(!moved&&cur.classList.contains('t')){cur.focus();} cur=null;} });
+window.addEventListener('mouseup',function(){
+  if(cur){ cur.style.cursor='grab';
+    if(curslide)curslide.classList.remove('dragging');
+    if(!moved&&cur.classList.contains('t')){cur.focus();}
+    if(moved)markDirty();
+    cur=null;curslide=null;
+  }
+});
 function dl(btn){
   var box=btn.closest('.wrap').querySelector('.slidebox');
   var slide=box.querySelector('.slide');
