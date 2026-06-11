@@ -30,6 +30,25 @@
   .big p{color:var(--gray);font-weight:600;font-size:16px;}
   .foot{text-align:center;color:var(--gray);font-size:14px;padding:20px;font-weight:700;}
 </style></head><body>
+<div id="gate" style="position:fixed; inset:0; background:#2E2A24; display:flex; align-items:center; justify-content:center; z-index:99999; font-family:Arial,sans-serif;">
+  <div style="text-align:center;">
+    <div style="color:#EFA45C; font-size:13px; letter-spacing:4px; margin-bottom:14px;">JACK CHEN MORTGAGE</div>
+    <div style="color:#fff; font-size:20px; margin-bottom:16px;">Enter password</div>
+    <input id="gpw" type="password" autofocus style="padding:11px 14px; font-size:16px; border-radius:8px; border:none; width:200px;">
+    <button id="gbtn" style="padding:11px 18px; margin-left:8px; background:#D8842F; color:#fff; border:none; border-radius:8px; font-size:16px; cursor:pointer;">Enter</button>
+    <div id="gerr" style="color:#E24B4A; font-size:13px; margin-top:12px; height:16px;"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var PW='serve';
+  function unlock(){ var g=document.getElementById('gate'); if(g) g.style.display='none'; }
+  if(sessionStorage.getItem('jcm_ok')==='1'){ unlock(); }
+  function tryit(){ if(document.getElementById('gpw').value===PW){ sessionStorage.setItem('jcm_ok','1'); unlock(); } else { document.getElementById('gerr').textContent='Incorrect password'; } }
+  document.getElementById('gbtn').addEventListener('click', tryit);
+  document.getElementById('gpw').addEventListener('keydown', function(e){ if(e.key==='Enter') tryit(); });
+})();
+</script>
 <div class="head"><img src="jcm-logo-white.png" alt="Jack Chen Mortgage"><div class="sub">Marketing</div></div>
 <div class="wrap">
   <div class="tabs">
