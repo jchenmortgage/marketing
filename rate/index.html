@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Today's Rate — Jack Chen Mortgage</title>
+<style>
+  :root{
+    --orange:#D8842F; --deep:#C26A1B; --amber:#F7EAD7;
+    --cream:#FBF6EF; --stone:#E3D6C4; --charcoal:#2E2A24; --gray:#7A7065;
+    --divider:#EFE3D2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#d9d4cc; font-family:"Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif; padding:24px; display:flex; flex-direction:column; align-items:center; gap:16px;}
+  .bar{width:1080px; max-width:100%; background:#fff; border-radius:12px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  .bar p{font-size:14px; color:#555; line-height:1.5;}
+  .bar b{color:var(--deep);}
+  .btn{background:var(--orange); color:#fff; border:none; font-size:15px; font-weight:600; padding:11px 22px; border-radius:10px; cursor:pointer; white-space:nowrap;}
+  .btn:hover{background:var(--deep);}
+  .btn:active{transform:scale(.98);}
+  .edit{outline:none; border-radius:6px; cursor:text;}
+  .edit:hover{background:rgba(216,132,47,0.10);}
+  .edit:focus{background:rgba(216,132,47,0.16);}
+  .post{width:1080px; height:1350px; background:var(--cream); border:1px solid var(--stone); display:flex; flex-direction:column; overflow:hidden;}
+  .band{background:var(--charcoal); padding:44px 64px 38px; display:flex; justify-content:space-between; align-items:flex-start; gap:30px; border-bottom:12px solid #E59A4E;}
+  .eyebrow{color:#EFA45C; font-size:26px; font-weight:500; letter-spacing:6px; margin-bottom:12px;}
+  .date{color:#FFFFFF; font-size:60px; font-weight:600; line-height:1.0;}
+  .brand{color:#B7AFA3; font-size:27px; margin-top:14px;}
+  .logo{width:230px; height:auto; flex:none; align-self:flex-start; margin-top:4px;}
+  .body{flex:1; padding:16px 64px 8px; display:flex; flex-direction:column; justify-content:center;}
+  .section-head{display:flex; align-items:baseline; gap:18px; padding:18px 6px 4px;}
+  .sec-tag{color:#FFFFFF; background:var(--deep); font-size:26px; font-weight:600; padding:8px 20px; border-radius:12px; letter-spacing:1px;}
+  .sec-tag.alt{background:var(--charcoal);}
+  .row{display:flex; justify-content:space-between; align-items:center; padding:28px 6px; border-bottom:2px solid var(--divider);}
+  .row:last-child{border-bottom:none;}
+  .program{color:var(--charcoal); font-size:40px; font-weight:500;}
+  .cn{display:block; color:var(--gray); font-size:25px; font-weight:400; margin-top:4px;}
+  .rate{color:var(--deep); font-size:50px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .footer{padding:32px 64px 40px; background:var(--amber); border-top:1px solid var(--stone);}
+  .foot-text{color:var(--deep); font-size:28px; font-weight:500;}
+  .stage{display:flex; gap:18px; align-items:flex-start; justify-content:center; width:100%;}
+  .log{width:200px; flex:none; background:#fff; border-radius:12px; padding:12px; max-height:calc(100vh - 200px); overflow:auto; color:#333;}
+  .loghead{display:flex; justify-content:space-between; align-items:center; font-weight:600; color:#2E2A24; margin-bottom:8px; font-size:13px;}
+  .logempty{color:#999; font-size:12px; line-height:1.5;}
+  .logitem{border:1px solid #eee; border-radius:8px; padding:7px 9px; margin-bottom:7px;}
+  .logitem:hover{border-color:#E3D6C4; background:#FBF6EF;}
+  .logtop{display:flex; justify-content:space-between; align-items:center;}
+  .logtime{font-weight:600; color:#C26A1B; font-size:12px;}
+  .logdate{color:#2E2A24; font-size:12px; margin-top:1px;}
+  .logmore{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+  .logitem:hover .logmore{max-height:320px;}
+  .logsub2{color:#999; font-size:11px; margin:5px 0 4px;}
+  .logtbl{width:100%; border-collapse:collapse;}
+  .logtbl td{padding:1px 0; font-size:12px;}
+  .logtbl td:last-child{text-align:right; color:#C26A1B; font-weight:600; font-variant-numeric:tabular-nums;}
+  .loglink{background:none; border:none; color:#185FA5; cursor:pointer; font-size:11px; padding:3px 0 0; text-decoration:underline;}
+  @media (max-width:760px){
+    body{padding:10px;}
+    .bar{width:100%; padding:12px 14px;}
+    .bar p{min-width:0; font-size:13px;}
+    .stage{flex-direction:column; gap:12px; align-items:center;}
+    .log{width:100%; max-height:340px;}
+  }
+</style>
+</head>
+<body>
+  <div id="gate" style="position:fixed; inset:0; background:#2E2A24; display:flex; align-items:center; justify-content:center; z-index:99999; font-family:Arial,sans-serif;">
+    <div style="text-align:center;">
+      <div style="color:#EFA45C; font-size:13px; letter-spacing:4px; margin-bottom:14px;">JACK CHEN MORTGAGE</div>
+      <div style="color:#fff; font-size:20px; margin-bottom:16px;">Enter password</div>
+      <input id="gpw" type="password" autofocus style="padding:11px 14px; font-size:16px; border-radius:8px; border:none; width:200px;">
+      <button id="gbtn" style="padding:11px 18px; margin-left:8px; background:#D8842F; color:#fff; border:none; border-radius:8px; font-size:16px; cursor:pointer;">Enter</button>
+      <div id="gerr" style="color:#E24B4A; font-size:13px; margin-top:12px; height:16px;"></div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var PW='serve';
+    function unlock(){ var g=document.getElementById('gate'); if(g) g.style.display='none'; }
+    if(sessionStorage.getItem('jcm_ok')==='1'){ unlock(); }
+    function tryit(){ if(document.getElementById('gpw').value===PW){ sessionStorage.setItem('jcm_ok','1'); unlock(); } else { document.getElementById('gerr').textContent='Incorrect password'; } }
+    document.getElementById('gbtn').addEventListener('click', tryit);
+    document.getElementById('gpw').addEventListener('keydown', function(e){ if(e.key==='Enter') tryit(); });
+  })();
+  </script>
+
+  <div id="imgov" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:100000; overflow:auto; padding:18px; text-align:center;">
+    <div style="color:#fff; font-size:15px; margin:6px 0 14px; font-family:Arial,sans-serif;">Press and hold the image to save it to your photos. Tap anywhere outside to close.</div>
+    <img id="imgout" style="max-width:100%; height:auto; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.5);">
+  </div>
+
+  <div class="bar">
+    <p><b>Click any text to edit</b>, then Save — syncs across your devices. <span id="status" style="font-weight:500;"></span></p>
+    <div style="display:flex; gap:10px;">
+      <button class="btn" id="reset" style="background:transparent; color:#555; border:1px solid #ccc;">Reset</button>
+      <button class="btn" id="save" style="background:#1D9E75;">Save</button>
+      <button class="btn" id="dl">Download PNG</button>
+      <button class="btn" id="saveimg" style="background:#185FA5;">Save to phone</button>
+    </div>
+  </div>
+
+  <div class="stage">
+  <div class="post" id="post">
+    <div class="band">
+      <div class="band-left">
+        <div class="eyebrow edit" contenteditable="true" spellcheck="false">TODAY'S RATES</div>
+        <div class="date edit" contenteditable="true" spellcheck="false">June 5, 2026</div>
+        <div class="brand edit" contenteditable="true" spellcheck="false">NY · Single Family · 760 FICO · 30% Down</div>
+      </div>
+      <img class="logo" src="../jcm-logo-white.png" alt="Jack Chen Mortgage">
+    </div>
+
+    <div class="body">
+      <div class="section-head"><span class="sec-tag edit" contenteditable="true" spellcheck="false">QM · 查收入</span></div>
+      <div class="row">
+        <div class="program"><span class="edit" contenteditable="true" spellcheck="false">30Y Fixed</span><span class="cn edit" contenteditable="true" spellcheck="false">30年固定</span></div>
+        <div class="rate edit" contenteditable="true" spellcheck="false">5.875%</div>
+      </div>
+      <div class="row">
+        <div class="program"><span class="edit" contenteditable="true" spellcheck="false">15Y Fixed</span><span class="cn edit" contenteditable="true" spellcheck="false">15年固定</span></div>
+        <div class="rate edit" contenteditable="true" spellcheck="false">5.375%</div>
+      </div>
+      <div class="row">
+        <div class="program"><span class="edit" contenteditable="true" spellcheck="false">7Y ARM</span><span class="cn edit" contenteditable="true" spellcheck="false">7年浮动</span></div>
+        <div class="rate edit" contenteditable="true" spellcheck="false">5.75%</div>
+      </div>
+      <div class="section-head"><span class="sec-tag alt edit" contenteditable="true" spellcheck="false">Non-QM · 不查收入</span></div>
+      <div class="row">
+        <div class="program"><span class="edit" contenteditable="true" spellcheck="false">Bank Statement</span><span class="cn edit" contenteditable="true" spellcheck="false">银行流水证明</span></div>
+        <div class="rate edit" contenteditable="true" spellcheck="false">7.25%</div>
+      </div>
+      <div class="row">
+        <div class="program"><span class="edit" contenteditable="true" spellcheck="false">VOE · P&amp;L</span><span class="cn edit" contenteditable="true" spellcheck="false">工作 · 自雇证明</span></div>
+        <div class="rate edit" contenteditable="true" spellcheck="false">7.50%</div>
+      </div>
+      <div class="row">
+        <div class="program"><span class="edit" contenteditable="true" spellcheck="false">DSCR</span><span class="cn edit" contenteditable="true" spellcheck="false">投资房贷款</span></div>
+        <div class="rate edit" contenteditable="true" spellcheck="false">7.75%</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="foot-text edit" contenteditable="true" spellcheck="false">Jack Chen Mortgage · @yourhandle</div>
+    </div>
+  </div>
+    <aside class="log" id="log"></aside>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    var post = document.getElementById('post');
+    function fit(){
+      var mobile = window.innerWidth < 760;
+      var vw = mobile ? (window.innerWidth - 22) : (window.innerWidth - 210 - 90);
+      var vh = window.innerHeight - 150;
+      var f = mobile ? Math.min(1, vw/1080) : Math.min(1, vw/1080, vh/1350);
+      post.style.zoom = f;
+    }
+    window.addEventListener('resize', fit);
+    fit();
+
+    var KEY='jcm_rate_v1';
+    var LOGKEY='jcm_rate_log';
+    var DB='https://jc-rates-default-rtdb.firebaseio.com';
+    var fields=document.querySelectorAll('.edit');
+    var statusEl=document.getElementById('status');
+    var logEl=document.getElementById('log');
+    var LOG=[];
+    function fmt(ts){ try{ return new Date(ts).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } }
+    function txt(el){ return el? el.textContent.trim() : ''; }
+    function setStatus(s, ts){
+      if(!statusEl) return;
+      if(s==='saved'){ statusEl.textContent='✓ Synced · '+fmt(ts); statusEl.style.color='#1D9E75'; }
+      else if(s==='dirty'){ statusEl.textContent='● Unsaved changes'; statusEl.style.color='#BA7517'; }
+      else if(s==='syncing'){ statusEl.textContent='⟳ Syncing…'; statusEl.style.color='#7A7065'; }
+      else if(s==='offline'){ statusEl.textContent='⚠ Saved on this device (cloud sync failed)'; statusEl.style.color='#C0392B'; }
+      else { statusEl.textContent='Not saved yet'; statusEl.style.color='#7A7065'; }
+    }
+    function snapshot(){
+      var data=[]; fields.forEach(function(el){ data.push(el.innerHTML); });
+      var rows=[];
+      document.querySelectorAll('.row').forEach(function(r){ var p=r.querySelector('.program > span'); var rt=r.querySelector('.rate'); rows.push({p:p?p.textContent.trim():'', r:rt?rt.textContent.trim():''}); });
+      return {ts:Date.now(), data:data, date:txt(document.querySelector('.date')), assum:txt(document.querySelector('.brand')), rows:rows};
+    }
+    function applyData(data){ if(data && data.length===fields.length){ fields.forEach(function(el,i){ el.innerHTML=data[i]; }); } }
+    function renderLog(){
+      if(!logEl) return;
+      var h='<div class="loghead"><span>Saved log</span>'+(LOG.length?'<button id="clearlog" class="loglink">Clear</button>':'')+'</div>';
+      if(!LOG.length){ h+='<div class="logempty">No saves yet. Edit rates and press Save. Hover an entry for details.</div>'; }
+      LOG.forEach(function(e,i){
+        h+='<div class="logitem"><div class="logtop"><span class="logtime">'+fmt(e.ts)+'</span></div>';
+        h+='<div class="logdate">'+(e.date||'')+'</div>';
+        h+='<div class="logmore"><div class="logsub2">'+(e.assum||'')+'</div><table class="logtbl">';
+        (e.rows||[]).forEach(function(rw){ h+='<tr><td>'+rw.p+'</td><td>'+rw.r+'</td></tr>'; });
+        h+='</table><button class="loglink" data-i="'+i+'">Load these</button></div></div>';
+      });
+      logEl.innerHTML=h;
+      var cl=document.getElementById('clearlog');
+      if(cl) cl.addEventListener('click', function(){ if(confirm('Clear the saved log on all devices?')){ LOG=[]; try{localStorage.removeItem(LOGKEY);}catch(e){} fbPut('/log', []); renderLog(); } });
+      logEl.querySelectorAll('button[data-i]').forEach(function(b){ b.addEventListener('click', function(){ var e=LOG[+b.getAttribute('data-i')]; if(e&&e.data&&e.data.length===fields.length){ applyData(e.data); setStatus('dirty'); } }); });
+    }
+    function fbGet(path){ return fetch(DB+path+'.json').then(function(r){ return r.ok? r.json() : null; }).catch(function(){ return null; }); }
+    function fbPut(path,val){ return fetch(DB+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)}).then(function(r){ return r.ok; }).catch(function(){ return false; }); }
+    function autodate(){ var dEl=document.querySelector('.date'); if(dEl){ var today=new Date().toLocaleDateString([], {month:'long',day:'numeric',year:'numeric'}); if(dEl.textContent.trim()!==today){ dEl.textContent=today; } } }
+    function init(){
+      setStatus('syncing');
+      Promise.all([fbGet('/current'), fbGet('/log')]).then(function(res){
+        var cur=res[0], log=res[1];
+        if(cur && cur.data){ applyData(cur.data); }
+        else { try{ var o=JSON.parse(localStorage.getItem(KEY)); if(o&&o.data) applyData(o.data); }catch(e){} }
+        if(Array.isArray(log)){ LOG=log; } else { try{ LOG=JSON.parse(localStorage.getItem(LOGKEY))||[]; }catch(e){ LOG=[]; } }
+        renderLog();
+        autodate();
+        if(cur && cur.ts) setStatus('saved', cur.ts); else setStatus('none');
+      });
+    }
+    function doSave(){
+      setStatus('syncing');
+      var snap=snapshot();
+      try{ localStorage.setItem(KEY, JSON.stringify({data:snap.data, ts:snap.ts})); }catch(e){}
+      LOG.unshift(snap); if(LOG.length>40) LOG=LOG.slice(0,40);
+      try{ localStorage.setItem(LOGKEY, JSON.stringify(LOG)); }catch(e){}
+      renderLog();
+      Promise.all([fbPut('/current',{data:snap.data, ts:snap.ts}), fbPut('/log', LOG)]).then(function(r){
+        if(r[0] && r[1]) setStatus('saved', snap.ts); else setStatus('offline', snap.ts);
+      });
+    }
+    document.addEventListener('input', function(e){ if(e.target.classList && e.target.classList.contains('edit')) setStatus('dirty'); });
+    document.addEventListener('keydown', function(e){ if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')){ e.preventDefault(); doSave(); } });
+    var sv=document.getElementById('save'); if(sv) sv.addEventListener('click', doSave);
+    var rst=document.getElementById('reset'); if(rst) rst.addEventListener('click', function(){ location.reload(); });
+    init();
+    document.getElementById('dl').addEventListener('click', function(){
+      if (document.activeElement) document.activeElement.blur();
+      var prev = post.style.zoom; post.style.zoom = 1;
+      html2canvas(post, {scale: 1, backgroundColor: '#FBF6EF', useCORS: true}).then(function(canvas){
+        var link = document.createElement('a'); var d = new Date();
+        link.download = 'todays-rate-' + d.toISOString().slice(0,10) + '.png';
+        link.href = canvas.toDataURL('image/png'); link.click(); post.style.zoom = prev;
+      });
+    });
+    function genImage(){
+      if (document.activeElement) document.activeElement.blur();
+      var prev = post.style.zoom; post.style.zoom = 1;
+      html2canvas(post, {scale: 1, backgroundColor: '#FBF6EF', useCORS: true}).then(function(canvas){
+        post.style.zoom = prev;
+        var ov=document.getElementById('imgov'), im=document.getElementById('imgout');
+        im.src=canvas.toDataURL('image/png'); ov.style.display='block';
+      });
+    }
+    var si=document.getElementById('saveimg'); if(si) si.addEventListener('click', genImage);
+    var ov=document.getElementById('imgov'); if(ov) ov.addEventListener('click', function(e){ if(e.target.id==='imgov'||e.target.tagName==='DIV') ov.style.display='none'; });
+  </script>
+
+</body>
+</html>
