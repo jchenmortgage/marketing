@@ -1,6 +1,36 @@
 (function(){
+  var BASE='https://jchenmortgage.github.io/marketing/';
+  var H=52;
+
+  // ---------- global site menu bar (on every page) ----------
+  function link(href,label,on){
+    return '<a href="'+href+'" style="text-decoration:none;font-weight:800;font-size:14px;padding:8px 15px;border-radius:999px;white-space:nowrap;color:'+(on?'#fff':'#cbbfae')+';background:'+(on?'#D8842F':'transparent')+'">'+label+'</a>';
+  }
+  function buildNav(){
+    if(document.getElementById('jcmnav')) return;
+    var p=location.pathname.replace(/\/+$/,'');
+    var isRate = p.indexOf('/rate')!==-1;
+    var isPosts = p.indexOf('/posts')!==-1;
+    var isHome = !isRate && !isPosts;
+    var bar=document.createElement('div');
+    bar.id='jcmnav';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;height:'+H+'px;background:#2E2A24;display:flex;align-items:center;gap:6px;padding:0 12px;z-index:2147483646;font-family:"Nunito Sans",Arial,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.3);overflow-x:auto;-webkit-overflow-scrolling:touch';
+    bar.innerHTML=''
+      + '<a href="'+BASE+'" title="Home" style="display:flex;align-items:center;text-decoration:none;margin-right:4px;flex:none"><img src="'+BASE+'jcm-logo-white.svg" alt="Jack Chen Mortgage" style="height:30px"></a>'
+      + link(BASE,'Home',isHome)
+      + link(BASE+'rate/','Today’s Rate',isRate)
+      + link(BASE+'#posts','Social Posts',isPosts);
+    document.body.insertBefore(bar, document.body.firstChild);
+    document.body.style.paddingTop=H+'px';
+    // push any existing in-page sticky toolbar below the global bar
+    var ex=document.querySelector('.nav');
+    if(ex && ex.id!=='jcmnav'){ try{ if(getComputedStyle(ex).position==='sticky') ex.style.top=H+'px'; }catch(e){} }
+  }
+  if(document.body) buildNav(); else document.addEventListener('DOMContentLoaded',buildNav);
+
+  // ---------- password gate (24h, whole site) ----------
   var PW='serve';
-  var DUR=24*60*60*1000; // 24 hours
+  var DUR=24*60*60*1000;
   if(Date.now() < (parseInt(localStorage.getItem('jcm_gate')||'0',10))) return;
   var ov=document.createElement('div');
   ov.id='jcmgate';
