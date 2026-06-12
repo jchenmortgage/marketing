@@ -81,9 +81,14 @@
 </div>
 <div class="foot">Jack Chen Mortgage · marketing hub</div>
 <script>
-  document.querySelectorAll('.tab[data-t]').forEach(t=>t.onclick=()=>{
+  function showTab(name){
+    var tab=document.querySelector('.tab[data-t="'+name+'"]'); if(!tab) return;
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on'); document.getElementById(t.dataset.t).classList.add('on');
-  });
+    tab.classList.add('on'); document.getElementById(name).classList.add('on');
+  }
+  document.querySelectorAll('.tab[data-t]').forEach(t=>t.onclick=()=>{ showTab(t.dataset.t); history.replaceState(null,'','#'+t.dataset.t); });
+  function fromHash(){ if(location.hash==='#posts') showTab('posts'); else if(location.hash==='#rate'||location.hash==='') showTab('rate'); }
+  fromHash();
+  window.addEventListener('hashchange', fromHash);
 </script></body></html>
