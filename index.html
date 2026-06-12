@@ -7,7 +7,7 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'Nunito Sans',system-ui,sans-serif;background:var(--cream);color:var(--charcoal);-webkit-font-smoothing:antialiased;}
   .head{background:var(--charcoal);color:#fff;padding:30px 24px 26px;text-align:center;}
-  .head img{height:60px;display:block;margin:0 auto 6px;}
+  .head img{height:64px;width:auto;display:block;margin:0 auto 4px;}
   .head .sub{color:#e9d9c4;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:14px;}
   .wrap{max-width:980px;margin:0 auto;padding:26px 20px 60px;}
   .tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:24px 0 30px;}
@@ -30,8 +30,20 @@
   .big h3{font-size:26px;font-weight:900;margin-bottom:6px;}
   .big p{color:var(--gray);font-weight:600;font-size:16px;}
   .foot{text-align:center;color:var(--gray);font-size:14px;padding:20px;font-weight:700;}
+  @media(max-width:600px){
+    .head{padding:22px 16px 20px;}
+    .head img{height:52px;}
+    .wrap{padding:20px 14px 48px;}
+    .tabs{gap:8px;margin:18px 0 22px;}
+    .tab{font-size:15px;padding:11px 18px;}
+    .grid{grid-template-columns:1fr 1fr;gap:14px;}
+    .thumb{height:140px;font-size:18px;}
+    .big{flex-direction:column;text-align:center;gap:16px;padding:24px;}
+    .big h3{font-size:22px;}
+  }
+  @media(max-width:380px){.grid{grid-template-columns:1fr;}}
 </style></head><body>
-<div class="head"><img src="jcm-logo-white.png" alt="Jack Chen Mortgage"><div class="sub">Marketing</div></div>
+<div class="head"><img src="jcm-logo-white.svg" alt="Jack Chen Mortgage"><div class="sub">Marketing</div></div>
 <div class="wrap">
   <div class="tabs">
     <div class="tab on" data-t="rate">Today's Rate</div>
@@ -51,6 +63,10 @@
       <a class="card" href="./posts/cema/">
         <div class="thumb"><span class="pill">Refi · NY</span>NY CEMA<br>Save on refi tax</div>
         <div class="cardb"><h3>NY CEMA refi</h3><p>5-slide carousel · editable</p></div>
+      </a>
+      <a class="card" href="./posts/cema-styles/">
+        <div class="thumb" style="background:#2E2A24;color:#F4C982"><span class="pill">3 styles</span>NY CEMA<br>style options</div>
+        <div class="cardb"><h3>CEMA — 3 styles</h3><p>Editorial · Geometric · Friendly</p></div>
       </a>
       <div class="card" style="opacity:.6;pointer-events:none;">
         <div class="thumb"><span class="pill">First-time</span>Closing costs<br>explained</div>
