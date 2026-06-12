@@ -22,11 +22,41 @@
       + link(BASE+'#posts','Social Posts',isPosts);
     document.body.insertBefore(bar, document.body.firstChild);
     document.body.style.paddingTop=H+'px';
-    // push any existing in-page sticky toolbar below the global bar
     var ex=document.querySelector('.nav');
     if(ex && ex.id!=='jcmnav'){ try{ if(getComputedStyle(ex).position==='sticky') ex.style.top=H+'px'; }catch(e){} }
   }
   if(document.body) buildNav(); else document.addEventListener('DOMContentLoaded',buildNav);
+
+  // ---------- cross-device cloud sync for editors ----------
+  // Any page that defines global collect(), restore() and KEY (the editor pattern)
+  // gets automatic Firebase sync keyed by KEY, with no per-page code.
+  var DB='https://jc-rates-default-rtdb.firebaseio.com';
+  function syncStatus(txt){ var b=document.getElementById('saveBtn'); if(b){ var prop=('innerHTML' in b)?'innerHTML':'textContent'; b[prop]=txt; } }
+  function wireSync(){
+    if(typeof window.collect!=='function' || !window.KEY) return; // not an editor
+    var path=DB+'/carousels/'+window.KEY+'.json';
+    // 1) load from cloud; if none yet, seed cloud from this device's local save
+    fetch(path).then(function(r){ return r.ok? r.json() : null; }).then(function(data){
+      if(data){
+        try{ localStorage.setItem(window.KEY, JSON.stringify(data)); }catch(e){}
+        if(typeof window.restore==='function') window.restore();
+        if(typeof window.layout==='function') window.layout();
+      } else {
+        var loc=null; try{ loc=localStorage.getItem(window.KEY); }catch(e){}
+        if(loc){ fetch(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:loc}).catch(function(){}); }
+      }
+    }).catch(function(){});
+    // 2) wrap Save so every save also pushes to the cloud
+    var orig=window.save;
+    window.save=function(){
+      if(typeof orig==='function'){ try{ orig(); }catch(e){} }
+      var d; try{ d=window.collect(); }catch(e){ return; }
+      fetch(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+        .then(function(r){ if(r.ok) setTimeout(function(){ syncStatus('✓ Synced'); },120); })
+        .catch(function(){});
+    };
+  }
+  if(document.readyState!=='loading') wireSync(); else document.addEventListener('DOMContentLoaded',wireSync);
 
   // ---------- password gate (24h, whole site) ----------
   var PW='serve';
