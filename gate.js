@@ -16,7 +16,7 @@
     bar.id='jcmnav';
     bar.style.cssText='position:fixed;top:0;left:0;right:0;height:'+H+'px;background:#2E2A24;display:flex;align-items:center;gap:6px;padding:0 12px;z-index:2147483646;font-family:"Nunito Sans",Arial,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.3);overflow-x:auto;-webkit-overflow-scrolling:touch';
     bar.innerHTML=''
-      + '<a href="'+BASE+'" title="Home" style="display:flex;align-items:center;text-decoration:none;margin-right:4px;flex:none"><img src="'+BASE+'jcm-logo-white.svg" alt="Jack Chen Mortgage" style="height:30px"></a>'
+      + '<a href="'+BASE+'" title="Home" style="display:flex;align-items:center;text-decoration:none;margin-right:4px;flex:none"><img src="'+BASE+'jcm-logo-white.png" alt="Jack Chen Mortgage" style="height:34px"></a>'
       + link(BASE,'Home',isHome)
       + link(BASE+'rate/','Today’s Rate',isRate)
       + link(BASE+'#posts','Social Posts',isPosts);
@@ -28,14 +28,11 @@
   if(document.body) buildNav(); else document.addEventListener('DOMContentLoaded',buildNav);
 
   // ---------- cross-device cloud sync for editors ----------
-  // Any page that defines global collect(), restore() and KEY (the editor pattern)
-  // gets automatic Firebase sync keyed by KEY, with no per-page code.
   var DB='https://jc-rates-default-rtdb.firebaseio.com';
   function syncStatus(txt){ var b=document.getElementById('saveBtn'); if(b){ var prop=('innerHTML' in b)?'innerHTML':'textContent'; b[prop]=txt; } }
   function wireSync(){
-    if(typeof window.collect!=='function' || !window.KEY) return; // not an editor
+    if(typeof window.collect!=='function' || !window.KEY) return;
     var path=DB+'/carousels/'+window.KEY+'.json';
-    // 1) load from cloud; if none yet, seed cloud from this device's local save
     fetch(path).then(function(r){ return r.ok? r.json() : null; }).then(function(data){
       if(data){
         try{ localStorage.setItem(window.KEY, JSON.stringify(data)); }catch(e){}
@@ -46,7 +43,6 @@
         if(loc){ fetch(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:loc}).catch(function(){}); }
       }
     }).catch(function(){});
-    // 2) wrap Save so every save also pushes to the cloud
     var orig=window.save;
     window.save=function(){
       if(typeof orig==='function'){ try{ orig(); }catch(e){} }
