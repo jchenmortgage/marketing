@@ -180,8 +180,11 @@
       if(cl) cl.addEventListener('click', function(){ if(confirm('Clear the saved log on all devices?')){ LOG=[]; try{localStorage.removeItem(LOGKEY);}catch(e){} fbPut('/log', []); renderLog(); } });
       logEl.querySelectorAll('button[data-i]').forEach(function(b){ b.addEventListener('click', function(){ var e=LOG[+b.getAttribute('data-i')]; if(e&&e.data&&e.data.length===fields.length){ applyData(e.data); setStatus('dirty'); } }); });
     }
-    function fbGet(path){ return fetch(DB+path+'.json').then(function(r){ return r.ok? r.json() : null; }).catch(function(){ return null; }); }
-    function fbPut(path,val){ return fetch(DB+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)}).then(function(r){ return r.ok; }).catch(function(){ return false; }); }
+    var FB_KEY='AIzaSyDAAoVIMXaYLA3s9I12cbXI45FrG9lc-74';
+    var _tk=null,_tkExp=0;
+    function fbToken(){ if(_tk && Date.now() < _tkExp-60000) return Promise.resolve(_tk); return fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+FB_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'}).then(function(r){ return r.ok? r.json() : null; }).then(function(d){ if(d && d.idToken){ _tk=d.idToken; _tkExp=Date.now()+(parseInt(d.expiresIn||'3600',10)*1000); return _tk; } return null; }).catch(function(){ return null; }); }
+    function fbGet(path){ return fbToken().then(function(t){ return fetch(DB+path+'.json'+(t?'?auth='+t:'')).then(function(r){ return r.ok? r.json() : null; }); }).catch(function(){ return null; }); }
+    function fbPut(path,val){ return fbToken().then(function(t){ return fetch(DB+path+'.json'+(t?'?auth='+t:''),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(val)}).then(function(r){ return r.ok; }); }).catch(function(){ return false; }); }
     function autodate(){ var dEl=document.querySelector('.date'); if(dEl){ var today=new Date().toLocaleDateString([], {month:'long',day:'numeric',year:'numeric'}); if(dEl.textContent.trim()!==today){ dEl.textContent=today; } } }
     function init(){
       setStatus('syncing');
