@@ -27,29 +27,46 @@
   }
   if(document.body) buildNav(); else document.addEventListener('DOMContentLoaded',buildNav);
 
-  // ---------- cross-device cloud sync for editors ----------
+  // ---------- anonymous Firebase auth (so DB rules can require auth != null) ----------
   var DB='https://jc-rates-default-rtdb.firebaseio.com';
+  var FB_KEY='AIzaSyDAAoVIMXaYLA3s9I12cbXI45FrG9lc-74';
+  var _tk=null,_tkExp=0;
+  function fbToken(){
+    if(_tk && Date.now() < _tkExp-60000) return Promise.resolve(_tk);
+    return fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+FB_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'})
+      .then(function(r){ return r.ok? r.json() : null; })
+      .then(function(d){ if(d && d.idToken){ _tk=d.idToken; _tkExp=Date.now()+(parseInt(d.expiresIn||'3600',10)*1000); return _tk; } return null; })
+      .catch(function(){ return null; });
+  }
+  function authUrl(rel){ return fbToken().then(function(t){ return DB+rel+'.json'+(t?'?auth='+t:''); }); }
+  window.jcmAuthUrl=authUrl; // exposed for other pages if needed
+
+  // ---------- cross-device cloud sync for editors ----------
   function syncStatus(txt){ var b=document.getElementById('saveBtn'); if(b){ var prop=('innerHTML' in b)?'innerHTML':'textContent'; b[prop]=txt; } }
   function wireSync(){
     if(typeof window.collect!=='function' || !window.KEY) return;
-    var path=DB+'/carousels/'+window.KEY+'.json';
-    fetch(path).then(function(r){ return r.ok? r.json() : null; }).then(function(data){
-      if(data){
-        try{ localStorage.setItem(window.KEY, JSON.stringify(data)); }catch(e){}
-        if(typeof window.restore==='function') window.restore();
-        if(typeof window.layout==='function') window.layout();
-      } else {
-        var loc=null; try{ loc=localStorage.getItem(window.KEY); }catch(e){}
-        if(loc){ fetch(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:loc}).catch(function(){}); }
-      }
-    }).catch(function(){});
+    var rel='/carousels/'+window.KEY;
+    authUrl(rel).then(function(url){
+      fetch(url).then(function(r){ return r.ok? r.json() : null; }).then(function(data){
+        if(data){
+          try{ localStorage.setItem(window.KEY, JSON.stringify(data)); }catch(e){}
+          if(typeof window.restore==='function') window.restore();
+          if(typeof window.layout==='function') window.layout();
+        } else {
+          var loc=null; try{ loc=localStorage.getItem(window.KEY); }catch(e){}
+          if(loc){ authUrl(rel).then(function(u){ fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},body:loc}).catch(function(){}); }); }
+        }
+      }).catch(function(){});
+    });
     var orig=window.save;
     window.save=function(){
       if(typeof orig==='function'){ try{ orig(); }catch(e){} }
       var d; try{ d=window.collect(); }catch(e){ return; }
-      fetch(path,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
-        .then(function(r){ if(r.ok) setTimeout(function(){ syncStatus('✓ Synced'); },120); })
-        .catch(function(){});
+      authUrl(rel).then(function(u){
+        fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+          .then(function(r){ if(r.ok) setTimeout(function(){ syncStatus('✓ Synced'); },120); })
+          .catch(function(){});
+      });
     };
   }
   if(document.readyState!=='loading') wireSync(); else document.addEventListener('DOMContentLoaded',wireSync);
